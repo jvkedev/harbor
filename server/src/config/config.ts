@@ -11,6 +11,10 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+
+  LOG_LEVEL: z
+    .enum(["fatal", "error", "warn", "info", "debug", "trace"])
+    .default("info"),
 });
 
 const parseEnv = () => {
@@ -31,8 +35,13 @@ const env = parseEnv();
 
 const config = {
   port: env.PORT,
+
   nodeEnv: env.NODE_ENV,
+
+  logLevel: env.LOG_LEVEL,
+
   isProduction: env.NODE_ENV === "production",
+
   database: {
     uri: env.MONGODB_URI,
   },
