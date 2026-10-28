@@ -1,13 +1,10 @@
-import express from "express";
+import app from "./app.js";
+import { connectDB } from "./infrastructure/database/db.js";
 
-const app = express();
-app.use(express.json());
+const PORT = process.env.PORT;
 
-app.get("/", (req, res) => {
-  res.send("Harbor backend chal raha hai ⚓");
-});
+await connectDB();
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
