@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
+import env from "../../config/config.js";
 
 export async function connectDB(): Promise<void> {
-  const uri = process.env.MONGODB_URI;
+  const uri = env.database.uri;
 
   if (!uri) {
     console.error("MONGODB_URI is missing");

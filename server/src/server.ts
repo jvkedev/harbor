@@ -1,7 +1,8 @@
 import app from "./app.js";
 import { connectDB } from "./infrastructure/database/db.js";
+import env from "./config/config.js";
 
-const PORT = process.env.PORT;
+const PORT = env.port;
 
 await connectDB();
 
