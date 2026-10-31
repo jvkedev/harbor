@@ -11,21 +11,24 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
   // Convert known request errors into consistent application errors.
   let appErr: AppError;
-  
+
   if (err instanceof AppError) {
     appErr = err;
   } else if (err?.type === "entity.parse.failed") {
     appErr = AppError.badRequest("Invalid JSON");
   } else if (err?.type === "entity.too.large") {
-    appErr = new AppError("Paylod too large", 413);
+    appErr = new AppError("Payload too large", 413);
   } else {
     appErr = AppError.serverError("Something went wrong", err);
   }
 
+  // NOTE: Log the full error (including cause) on the server only.
   const log = { err, path: req.path, method: req.method };
-  if (appErr.statusCode >= 500) logger.error(log, "request failed");
-  else logger.warn(log, "client error");
+  if (appErr.statusCode >= 500) {
+    logger.error(log, "request failed");
+  } else logger.warn(log, "client error");
 
+  // NOTE: Send only a safe message to the client, never the cause or stack.
   const message =
     appErr.statusCode < 500 ? appErr.message : "Something went wrong";
 
