@@ -1,63 +1,17 @@
-export interface ErrorDetail {
-  field?: string;
-  message: string;
-}
-
-interface AppErrorOptions {
-  isOperational?: boolean;
-  details?: ErrorDetail[];
-  cause?: unknown;
-}
-
-function sanitizeDetails(details?: ErrorDetail[]): ErrorDetail[] | undefined {
-  if (!details?.length) return undefined;
-
-  // Keep client-provided validation details small and bounded.
-  return details.slice(0, 20).map((d) => ({
-    ...(d.field ? { field: String(d.field).slice(0, 100) } : {}),
-    message: String(d.message).slice(0, 200),
-  }));
-}
-
 export class AppError extends Error {
   public readonly statusCode: number;
-  public readonly isOperational: boolean;
-  public readonly details?: ErrorDetail[];
 
-  constructor(
-    message: string,
-    statusCode: number = 500,
-    options: AppErrorOptions = {},
-  ) {
-    super(
-      message,
-      options.cause === undefined ? undefined : { cause: options.cause },
-    );
+  // NOTE: `cause` keeps the original error for server logs only.
+  constructor(message: string, statusCode: number = 500, cause?: unknown) {
+    super(message, { cause });
     this.name = "AppError";
-    // Fall back to a server error for invalid HTTP status codes.
-    this.statusCode =
-      Number.isInteger(statusCode) && statusCode >= 400 && statusCode <= 599
-        ? statusCode
-        : 500;
-    this.isOperational = options.isOperational ?? true;
-    this.details =
-      this.statusCode < 500 ? sanitizeDetails(options.details) : undefined;
+    this.statusCode = statusCode;
     Error.captureStackTrace(this, this.constructor);
   }
 
-  toJSON() {
-    const isServerError = this.statusCode >= 500;
-    return {
-      status: "error",
-      // Avoid exposing internal messages in API responses.
-      message: isServerError ? "Internal Server Error" : this.message,
-      ...(this.details ? { details: this.details } : {}),
-    };
-  }
-
   // Helpers for creating common HTTP errors.
-  static badRequest(message = "Bad Request", details?: ErrorDetail[]) {
-    return new AppError(message, 400, { details });
+  static badRequest(message = "Bad Request") {
+    return new AppError(message, 400);
   }
 
   static unauthorized(message = "Unauthorized") {
@@ -76,11 +30,8 @@ export class AppError extends Error {
     return new AppError(message, 409);
   }
 
-  static unprocessable(
-    message = "Unprocessable Entity",
-    details?: ErrorDetail[],
-  ) {
-    return new AppError(message, 422, { details });
+  static unprocessable(message = "Unprocessable Entity") {
+    return new AppError(message, 422);
   }
 
   static tooManyRequests(message = "Too Many Requests") {
@@ -88,10 +39,10 @@ export class AppError extends Error {
   }
 
   static serverError(message = "Internal Server Error", cause?: unknown) {
-    return new AppError(message, 500, { cause });
+    return new AppError(message, 500, cause);
   }
 
   static serviceUnavailable(message = "Service Unavailable", cause?: unknown) {
-    return new AppError(message, 503, { cause });
+    return new AppError(message, 503, cause);
   }
 }
