@@ -14,6 +14,10 @@ app.get("/", (_req, res) => {
   });
 });
 
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.use(notFoundHandler);
 app.use(errorHandler);
 
