@@ -1,7 +1,9 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../shared/errors/AppError.js";
-import { registerSchema } from "./auth.schema.js";
-import { registerUser } from "./auth.service.js";
+import { registerSchema, loginSchema } from "./auth.schema.js";
+import { loginUser, registerUser } from "./auth.service.js";
+import { signAccessToken } from "./token.js";
+import config from "../../config/config.js";
 
 export const register: RequestHandler = async (req, res) => {
   const result = registerSchema.safeParse(req.body);
@@ -14,6 +16,30 @@ export const register: RequestHandler = async (req, res) => {
   const user = await registerUser(result.data);
 
   res.status(201).json({
+    status: "success",
+    data: { user },
+  });
+};
+
+export const login: RequestHandler = async (req, res) => {
+  const result = loginSchema.safeParse(req.body);
+
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    throw AppError.badRequest(`${issue?.path.join(".")}: ${issue?.message}`);
+  }
+
+  const user = await loginUser(result.data);
+  const token = signAccessToken({ sub: user.id, role: user.role });
+
+  res.cookie("accessToken", token, {
+    httpOnly: true,
+    secure: config.isProduction,
+    sameSite: "lax",
+    maxAge: config.auth.accessExpiresInSeconds * 1000,
+  });
+
+  res.status(200).json({
     status: "success",
     data: { user },
   });
