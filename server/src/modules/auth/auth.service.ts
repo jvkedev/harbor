@@ -1,7 +1,7 @@
 import argon2 from "argon2";
 import { User } from "../users/user.model.js";
 import { AppError } from "../../shared/errors/AppError.js";
-import type { RegisterInput } from "./auth.schema.js";
+import type { LoginInput, RegisterInput } from "./auth.schema.js";
 
 export async function registerUser(input: RegisterInput) {
   const passwordHash = await argon2.hash(input.password);
@@ -26,4 +26,29 @@ export async function registerUser(input: RegisterInput) {
 
     throw err;
   }
+}
+
+// NOTE: Fake hash so verify still runs when the email is not found (hides timing).
+const DUMMY_HASH = await argon2.hash("dummy-password");
+
+export async function loginUser(input: LoginInput) {
+  const user = await User.findOne({ email: input.email }).select(
+    "+passwordHash",
+  );
+
+  const isValid = await argon2.verify(
+    user?.passwordHash ?? DUMMY_HASH,
+    input.password,
+  );
+
+  if (!user || !isValid) {
+    throw AppError.unauthorized("Invalid email or password");
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+  };
 }
