@@ -1,177 +1,214 @@
 # Harbor ⚓
 
-> An open-source community for developers who want to move abroad.
-> Real roadmaps by day. Live night-coding by night.
+> A community for developers working toward a move abroad.
+> Practical roadmaps by day; a little company for late-night coding.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Status: MVP in progress](https://img.shields.io/badge/status-MVP%20in%20progress-orange)
+![Status: Early development](https://img.shields.io/badge/status-early%20development-orange)
 
----
+Harbor aims to make moving abroad as a developer less confusing. The long-term
+idea is a place to share first-hand job-search roadmaps, ask people who have
+already made the move, and support one another while learning and building.
 
-## What is Harbor?
+**Current state:** Harbor is in early development. The backend has a working
+Express API foundation and authentication endpoints; the frontend is still the
+default Next.js starter screen. The feed, community features, and frontend to
+backend integration have not been built yet.
 
-Most advice about moving abroad as a developer is scattered, vague, or pure LinkedIn motivation. Harbor is a place where **people who have actually done it** share what worked, and where people who are on the way can ask real questions and get real answers.
+## What exists today
 
-Harbor is **not** another Instagram clone. It is a focused platform for one goal: helping developers from anywhere in the world move to countries like Germany, the USA, Canada, and Japan.
+- **Frontend:** Next.js App Router, React, TypeScript, and Tailwind CSS.
+- **Backend:** Express 5 API using TypeScript and native ES modules.
+- **Database:** MongoDB through Mongoose. The server connects to MongoDB before
+  it starts listening.
+- **Authentication foundation:** registration, login, current-user, and logout
+  endpoints. Passwords are hashed with Argon2; login issues an access token in
+  an HTTP-only cookie, and authenticated routes verify that cookie.
+- **Validation and operations:** Zod request/environment validation, Helmet
+  security headers, a 10 KB JSON body limit, Pino HTTP logging, and centralized
+  API error responses.
 
----
+There is currently no post feed, chat service, Socket.IO integration, Redis,
+PostgreSQL, payment system, or LLM-powered chatbot. Those remain possibilities
+for future development, not current runtime dependencies.
 
-## Two Modes
+## Project structure
 
-### ☀️ Day Mode: Roadmaps and real answers
-- Developers post real roadmaps, for example: *"How I got a Germany job"* or *"How much DSA is enough?"*
-- Seniors who are already working abroad reply with honest, practical answers.
-- A simple chatbot can search existing posts and answer common questions, for example: *"How much DSA do I need for Germany?"*
-
-### 🌙 Night Mode: After Dark
-- Between **12 AM and 5 AM**, the app switches to a dark theme.
-- See live who is coding at night, for example: *"Shubham is coding at 2 AM"*.
-- Developers can cheer each other on. Late-night coding feels less lonely.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js (App Router), TypeScript, Tailwind CSS |
-| Backend | Node.js, Express.js (TypeScript, ESM) |
-| Database (feed) | MongoDB Atlas |
-| Database (auth/payments, later) | PostgreSQL |
-| Live status (later) | Redis |
-| Realtime | Socket.io |
-| Auth | JWT, httpOnly cookies, role-based access control (RBAC) |
-| Chatbot | Simple `/api/chat` endpoint that searches posts and calls an LLM API (no model training) |
-| Hosting | Vercel (frontend), Render (backend), MongoDB Atlas (database) |
-
-### Why these choices?
-- **MongoDB for the feed:** posts are flexible documents, and the feed favors availability over strict consistency.
-- **PostgreSQL later for auth and payments:** these need strong consistency.
-- **Redis later for live status:** fast, short-lived data suits it well.
-- **Free-tier hosting:** the whole project can run at zero cost.
-
----
-
-## Project Structure
-
-```
+```text
 harbor/
-├── client/     # Next.js frontend (port 3000)
-├── server/     # Express + TypeScript backend (port 5000)
+├── client/                         # Next.js frontend
+│   ├── app/
+│   │   ├── globals.css             # Global styles and Tailwind import
+│   │   ├── layout.tsx              # Root layout and metadata
+│   │   └── page.tsx                # Current starter home page
+│   ├── public/                     # Static assets
+│   ├── package.json                # Frontend scripts and dependencies
+│   └── next.config.ts              # Next.js configuration
+├── server/                         # Express API
+│   ├── src/
+│   │   ├── config/                 # Environment parsing and app config
+│   │   ├── infrastructure/         # MongoDB connection and logger
+│   │   ├── modules/
+│   │   │   ├── auth/               # Auth routes, controller, service, tokens
+│   │   │   └── users/              # Mongoose user model
+│   │   ├── shared/                 # Errors and Express middleware
+│   │   ├── types/
+│   │   │   └── express.d.ts        # Adds the authenticated user to Express requests
+│   │   ├── app.ts                  # Express app and route registration
+│   │   └── server.ts               # Database connection and HTTP startup
+│   ├── .env.example                # Backend environment variable template
+│   ├── package.json                # Backend scripts and dependencies
+│   └── tsconfig.json
 ├── LICENSE
 └── README.md
 ```
 
----
-
-## Roadmap
-
-### Phase 0-1: MVP (current)
-- [x] Repository, client and server setup
-- [ ] Feed
-- [ ] Create post
-- [ ] Basic auth (JWT + httpOnly cookies)
-
-### Phase 2: Core features
-- [ ] Comments and replies from seniors
-- [ ] Roadmap post templates
-- [ ] User profiles (country, role, target country)
-- [ ] Chatbot over the posts database
-
-### Phase 3: Night Mode
-- [ ] Automatic dark theme from 12 AM to 5 AM
-- [ ] Live "who is coding now" status with Socket.io
-- [ ] Cheers between developers
-
-### Phase 4: Scale and polish
-- [ ] Rate limiting with a token bucket (5 posts per minute)
-- [ ] Sharding by country
-- [ ] Post potency score
-- [ ] PostgreSQL for auth, Redis for live status
-
-### Later
-- [ ] Job board
-- [ ] Mentorship sessions with developers working abroad
-
----
-
-## Getting Started
+## Getting started
 
 ### Prerequisites
-- Node.js 20 or higher
-- Git
-- A free MongoDB Atlas account (needed once the feed is built)
 
-### 1. Clone the repository
+- Node.js 20.9 or newer
+- npm
+- MongoDB, either a local instance or a MongoDB Atlas database
+
+### 1. Get the code
+
 ```bash
 git clone https://github.com/jvkedev/harbor.git
 cd harbor
 ```
 
-### 2. Run the backend
+### 2. Configure and run the backend
+
 ```bash
 cd server
-npm install
+npm ci
+cp .env.example .env
+```
+
+Edit `server/.env` and set `MONGODB_URI` to your MongoDB connection string and
+`JWT_ACCESS_SECRET` to a private random secret of at least 32 characters. Keep
+`.env` out of version control.
+
+Start the API:
+
+```bash
 npm run dev
 ```
-The server runs at `http://localhost:5000`.
 
-### 3. Run the frontend (in a second terminal)
+The API listens on `http://localhost:5000` by default. It exits during startup
+if the environment is invalid or MongoDB cannot be reached.
+
+### 3. Run the frontend
+
+In another terminal, from the repository root:
+
 ```bash
 cd client
-npm install
+npm ci
 npm run dev
 ```
-The app runs at `http://localhost:3000`.
 
-### Environment variables
-Create a `.env` file inside `server/` (never commit it):
-```
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_here
-```
+Open [http://localhost:3000](http://localhost:3000). The page is currently the
+unmodified Next.js starter screen; it does not yet call the API.
 
----
+## Backend API
+
+The server allows credentialed CORS requests from `http://localhost:3000`.
+Authentication uses the `accessToken` HTTP-only cookie.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/` | API welcome/status response |
+| `GET` | `/health` | Basic health response (`{ "status": "ok" }`) |
+| `POST` | `/api/auth/register` | Create an account with `email`, `username`, and `password` |
+| `POST` | `/api/auth/login` | Authenticate with `email` and `password`; sets the access cookie |
+| `GET` | `/api/auth/me` | Return the authenticated user's profile; requires the access cookie |
+| `POST` | `/api/auth/logout` | Clear the access cookie |
+
+Successful authentication responses use a JSON `status: "success"` field and
+return the user under `data.user`. Errors use `status: "error"` and a message.
+Registration creates the account; sign in afterward to receive the access
+cookie.
+
+## Environment variables
+
+The backend reads `server/.env` in development. Its template is
+[`server/.env.example`](server/.env.example).
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PORT` | No | `5000` | API listen port |
+| `MONGODB_URI` | Yes | — | MongoDB connection URI |
+| `NODE_ENV` | No | `development` | `development`, `production`, or `test` |
+| `LOG_LEVEL` | No | `info` | Pino log level |
+| `JWT_ACCESS_SECRET` | Yes | — | Private signing secret; at least 32 characters |
+| `JWT_ACCESS_EXPIRES_SECONDS` | No | `900` | Access-token lifetime in seconds |
+
+## Useful commands
+
+Run commands from the corresponding `client/` or `server/` directory:
+
+| Project | Command | Description |
+|---|---|---|
+| Client | `npm run dev` | Start the Next.js development server |
+| Client | `npm run lint` | Run ESLint |
+| Client | `npm run build` | Create a production build |
+| Client | `npm start` | Serve the production build |
+| Server | `npm run dev` | Run the API with watch mode and load `.env` |
+| Server | `npm run build` | Compile TypeScript into `server/dist/` |
+| Server | `npm start` | Run the compiled API |
+
+## Roadmap
+
+The roadmap describes the direction of the project; unchecked items are not
+implemented yet.
+
+### Community MVP
+
+- [ ] Build the frontend for the community feed
+- [ ] Create and browse roadmap posts
+- [ ] Connect frontend authentication flows to the API
+- [ ] Add comments and replies
+- [ ] Add developer profiles and target-country information
+
+### Community tools
+
+- [ ] Search posts and provide answers grounded in existing community content
+- [ ] Add roadmap templates and practical resources
+- [ ] Support job-search and mentorship discovery
+
+### Night coding
+
+- [ ] Offer an optional late-night coding mode
+- [ ] Show opt-in live coding status and encouragement between members
+
+### Longer term
+
+- [ ] Evaluate a job board and mentorship sessions
+- [ ] Revisit infrastructure needs as the community grows
 
 ## Contributing
 
-Harbor is open source and contributions are welcome, especially from developers who have already moved abroad and know what this community needs.
+Contributions are welcome, especially practical feedback from developers who
+have moved abroad or are working toward it. For a change:
 
-### Branching
-- `main`: live, stable code
-- `dev`: active development
-- `feature/your-feature-name`: your work, created from `dev`
+1. Fork the repository or create a feature branch from the active development
+   branch.
+2. Make a focused change and run the relevant client or server checks.
+3. Open a pull request describing the change and how it was verified.
 
-### Steps
-1. Fork the repo or create a branch from `dev`
-2. Create your branch: `git checkout -b feature/your-feature-name`
-3. Make your changes and commit with a clear message
-4. Push your branch and open a Pull Request into `dev`
+Suggested commit prefixes: `feat:`, `fix:`, `docs:`, and `chore:`.
 
-### Commit message style
-- `feat: add create post API`
-- `fix: correct feed pagination`
-- `docs: update README`
-- `chore: update dependencies`
+## Build in public
 
----
-
-## Build in Public
-
-This project is being built in public. Follow the journey on Instagram [@shubhameilish](https://www.instagram.com/shubhameilish), LinkedIn, and Discord.
-
----
-
-## Support the Project
-
-Harbor is free and will stay free. If you like it, you can support it through GitHub Sponsors (coming soon).
-
----
+Follow the project journey on Instagram
+[@shubhameilish](https://www.instagram.com/shubhameilish), LinkedIn, and
+Discord.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Harbor is licensed under the [MIT License](LICENSE).
 
 ---
 
