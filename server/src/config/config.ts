@@ -15,6 +15,12 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace"])
     .default("info"),
+
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
+
+  JWT_ACCESS_EXPIRES_SECONDS: z.coerce.number().default(900),
 });
 
 const parseEnv = () => {
@@ -44,6 +50,11 @@ const config = {
 
   database: {
     uri: env.MONGODB_URI,
+  },
+
+  auth: {
+    accessSecret: env.JWT_ACCESS_SECRET,
+    accessExpiresInSeconds: env.JWT_ACCESS_EXPIRES_SECONDS,
   },
 } as const;
 

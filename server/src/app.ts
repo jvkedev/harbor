@@ -1,12 +1,16 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
+
 import { logger } from "./infrastructure/logger/logger.js";
 import {
   errorHandler,
   notFoundHandler,
 } from "./shared/middlewares/errorHandler.js";
+
+import authRoutes from "./modules/auth/auth.routes.js";
 
 const app = express();
 
@@ -18,7 +22,8 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
+app.use(cookieParser());
 
 app.get("/", (_req, res) => {
   res.json({
@@ -29,6 +34,8 @@ app.get("/", (_req, res) => {
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use("/api/auth", authRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
