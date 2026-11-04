@@ -5,6 +5,12 @@ import { getUserById, loginUser, registerUser } from "./auth.service.js";
 import { signAccessToken } from "./token.js";
 import config from "../../config/config.js";
 
+const accessCookieOptions = {
+  httpOnly: true,
+  secure: config.isProduction,
+  samesite: "lax" as const,
+};
+
 export const register: RequestHandler = async (req, res) => {
   const result = registerSchema.safeParse(req.body);
 
@@ -33,9 +39,7 @@ export const login: RequestHandler = async (req, res) => {
   const token = signAccessToken({ sub: user.id, role: user.role });
 
   res.cookie("accessToken", token, {
-    httpOnly: true,
-    secure: config.isProduction,
-    sameSite: "lax",
+    ...accessCookieOptions,
     maxAge: config.auth.accessExpiresInSeconds * 1000,
   });
 
@@ -55,5 +59,14 @@ export const me: RequestHandler = async (req, res) => {
   res.status(200).json({
     status: "success",
     data: { user },
+  });
+};
+
+export const logout: RequestHandler = async (_req, res) => {
+  res.clearCookie("accessToken", accessCookieOptions);
+
+  res.status(200).json({
+    status: "success",
+    message: "Logged out",
   });
 };
