@@ -52,3 +52,18 @@ export async function loginUser(input: LoginInput) {
     role: user.role,
   };
 }
+
+export async function getUserById(id: string) {
+  const user = await User.findById(id);
+
+  if (!user) {
+    throw AppError.unauthorized("User no longer exists");
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+  };
+}
