@@ -1,9 +1,9 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../shared/errors/AppError.js";
-import { registerSchema, loginSchema } from "./auth.schema.js";
+import config from "../../config/config.js";
 import { getUserById, loginUser, registerUser } from "./auth.service.js";
 import { signAccessToken } from "./token.js";
-import config from "../../config/config.js";
+import { LoginInput, RegisterInput } from "./auth.schema.js";
 
 const accessCookieOptions = {
   httpOnly: true,
@@ -12,14 +12,7 @@ const accessCookieOptions = {
 };
 
 export const register: RequestHandler = async (req, res) => {
-  const result = registerSchema.safeParse(req.body);
-
-  if (!result.success) {
-    const issue = result.error.issues[0];
-    throw AppError.badRequest(`${issue?.path.join(".")}: ${issue?.message}`);
-  }
-
-  const user = await registerUser(result.data);
+  const user = await registerUser(req.body as RegisterInput);
 
   res.status(201).json({
     status: "success",
@@ -28,14 +21,7 @@ export const register: RequestHandler = async (req, res) => {
 };
 
 export const login: RequestHandler = async (req, res) => {
-  const result = loginSchema.safeParse(req.body);
-
-  if (!result.success) {
-    const issue = result.error.issues[0];
-    throw AppError.badRequest(`${issue?.path.join(".")}: ${issue?.message}`);
-  }
-
-  const user = await loginUser(result.data);
+  const user = await loginUser(req.body as LoginInput);
   const token = signAccessToken({ sub: user.id, role: user.role });
 
   res.cookie("accessToken", token, {
