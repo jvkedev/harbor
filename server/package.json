@@ -17,6 +17,7 @@
     "cors": "^2.8.6",
     "express": "^5.3.0",
     "helmet": "^8.3.0",
+    "i18n-iso-countries": "^7.14.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.4",
     "pino": "^10.4.0",

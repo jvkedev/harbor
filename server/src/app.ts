@@ -11,6 +11,7 @@ import {
 } from "./shared/middlewares/errorHandler.js";
 
 import authRoutes from "./modules/auth/auth.routes.js";
+import postRoutes from "./modules/posts/post.routes.js";
 
 const app = express();
 
@@ -22,8 +23,12 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
+
+// NOTE: Posts can be long, so this route gets its own larger body limit and must come before the global 10kb parser below.
+app.use("/api/posts", express.json({ limit: "50kb" }), postRoutes);
+
+app.use(express.json({ limit: "10kb" }));
 
 app.get("/", (_req, res) => {
   res.json({
